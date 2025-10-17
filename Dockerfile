@@ -1,16 +1,14 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Etapa 1: build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet restore
+RUN dotnet publish -c Release -o /out
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-RUN apt-get update && apt-get install -y apt-utils
-RUN apt-get install -y libfontconfig1
-RUN apt-get install -y libgdiplus
-
-#Install ms fonts.
-RUN sed -i'.bak' 's/$/ contrib/' /etc/apt/sources.list
-RUN apt-get update; apt-get install -y ttf-mscorefonts-installer fontconfig
-
+# Etapa 2: runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
+COPY --from=build /out .
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "EFV_GestionPlantilla.dll"]
